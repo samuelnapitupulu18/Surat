@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  password     String
+  role         String      // "ADMIN", "USER", etc.
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  positionId   String?
+  position     Position?   @relation(fields: [positionId], references: [id])
+  submissions  Submission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Position {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Submission {
+  id        String   @id @default(uuid())
+  type      String   // "LEAVE", "REIMBURSEMENT", etc.
+  data      String   // JSON stringified form data
+  status    String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  // Track current approval step or history if needed
+  // For simplicity, we might just store status. 
+  // But requirement says "ApprovalFlow (Menyimpan logic siapa menyetujui siapa)"
+  // This implies a configuration of flows, or a record of approvals?
+  // "ApprovalFlow (Menyimpan logic siapa menyetujui siapa)" -> This sounds like configuration.
+  
+  approvalFlowId String?
+  approvalFlow   ApprovalFlow? @relation(fields: [approvalFlowId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApprovalFlow {
+  id           String       @id @default(uuid())
+  name         String       // e.g. "General Leave Flow"
+  // Logic needed: who approves whom. 
+  // Could be simple: "Manager" -> "HR".
+  // Or referencing Position IDs.
+  steps        String       // JSON stringified list of approver positions/roles?
+  
+  submissions  Submission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
