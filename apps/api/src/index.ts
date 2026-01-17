@@ -52,4 +52,10 @@ app.post('/upload', authMiddleware, async (c) => {
   return c.json({ error: 'No file uploaded' }, 400)
 })
 
-export default app
+const port = parseInt(process.env.PORT || "3000");
+
+export default {
+  port,
+  fetch: app.fetch,
+}
+
